@@ -1,54 +1,67 @@
-/* Page styling */
 body {
-  font-family: sans-serif;
-  text-align: center;
-  background-color: #f0f0f0;
+  background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  height: 100vh;
   margin: 0;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 h1 {
-  margin-bottom: 20px;
+  margin-top: 0;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
-/* Chess board container */
 #board {
   display: grid;
   grid-template-columns: repeat(8, 80px);
   grid-template-rows: repeat(8, 80px);
   width: 640px;
   height: 640px;
-  margin: 0 auto;
-  border: 2px solid #333;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  border: 12px solid #3d2b1f; /* Wooden Frame */
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  position: relative; /* Needed for the glass overlay */
+  background-color: #333;
 }
 
-/* Individual squares */
+/* The Glass Reflection */
+.board-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; /* Let clicks pass through to squares */
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%);
+  z-index: 10;
+}
+
 .square {
   width: 80px;
   height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+  transition: filter 0.2s;
 }
 
-/* Square colors */
-.white {
-  background-color: #f0d9b5;
+.square:hover {
+  filter: brightness(1.2);
+  cursor: pointer;
 }
 
-.black {
-  background-color: #b58863;
+.white { background-color: #f0d9b5; }
+.black { background-color: #b58863; }
+
+/* Selection Highlight */
+.selected {
+  background-color: rgba(247, 247, 105, 0.8) !important;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
 }
 
-/* Piece images */
-.square img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
-/* Container for pieces inside a square */
 .piece-container {
   display: flex;
   flex-wrap: wrap;
@@ -58,20 +71,25 @@ h1 {
   align-items: center;
 }
 
-/* The actual piece image */
 .piece {
-  transition: all 0.2s ease;
+  object-fit: contain;
+  transition: all 0.3s ease;
 }
 
-/* When a piece is split (50% probability) */
-.split {
-  width: 45% !important;   /* Smaller size */
-  height: 45% !important;
-  filter: drop-shadow(0 0 5px #00d4ff); /* Cyan glow for quantum state */
-}
-
-/* When a piece is full (100% probability) */
 .full {
   width: 90%;
   height: 90%;
+}
+
+.split {
+  width: 45% !important;
+  height: 45% !important;
+  filter: drop-shadow(0 0 8px #00d4ff);
+  animation: quantum-pulse 2s infinite ease-in-out;
+}
+
+@keyframes quantum-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
 }

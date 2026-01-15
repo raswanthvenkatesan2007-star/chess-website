@@ -1,62 +1,112 @@
-let boardState = Array(8).fill(null).map(() => Array(8).fill(null).map(() => []));
+document.addEventListener("DOMContentLoaded", () => {
+  const boardDiv = document.getElementById("board");
 
-// Helper to add pieces initially
-function addPiece(row, col, type, prob = 1) {
-  boardState[row][col].push({
-    type: type,
-    prob: prob, // 1.0 for full, 0.5 for split
-    color: type === type.toUpperCase() ? 'white' : 'black'
-  });
-}
+  const pieceMap = {
+    "K": "white_king", "Q": "white_queen", "R": "white_rook",
+    "B": "white_bishop", "N": "white_knight", "P": "white_pawn",
+    "k": "black_king", "q": "black_queen", "r": "black_rook",
+    "b": "black_bishop", "n": "black_knight", "p": "black_pawn"
+  };
 
-// Example: Placing a full Rook and a split Pawn
-addPiece(7, 0, "R"); // Full Rook
-addPiece(6, 0, "P", 0.5); // Half Pawn
+  // State Management
+  let boardState = Array(8).fill(null).map(() => Array(8).fill(null).map(() => []));
+  let selectedSquare = null; // Stores {row, col}
 
-function renderBoard() {
-  boardDiv.innerHTML = "";
+  const startLayout = [
+    ["r","n","b","q","k","b","n","r"],
+    ["p","p","p","p","p","p","p","p"],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["","","","","","","",""],
+    ["P","P","P","P","P","P","P","P"],
+    ["R","N","B","Q","K","B","N","R"]
+  ];
 
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const square = document.createElement("div");
-      square.classList.add("square", (row + col) % 2 === 0 ? "white" : "black");
-      
-      const container = document.createElement("div");
-      container.classList.add("piece-container");
-
-      const piecesInSquare = boardState[row][col]; // This is now an array
-
-      piecesInSquare.forEach(pieceData => {
-        const img = document.createElement("img");
-        img.src = `pieces/${pieceMap[pieceData.type]}.png`;
-        img.classList.add("piece");
-        
-        // Apply "split" class if probability is less than 1
-        if (pieceData.prob < 1) {
-          img.classList.add("split");
-        } else {
-          img.classList.add("full");
-        }
-        
-        container.appendChild(img);
-      });
-
-      square.appendChild(container);
-      boardDiv.appendChild(square);
+  // Initialize board data
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (startLayout[r][c] !== "") {
+        boardState[r][c].push({
+          type: startLayout[r][c],
+          prob: 1,
+          color: startLayout[r][c] === startLayout[r][c].toUpperCase() ? 'white' : 'black'
+        });
+      }
     }
   }
-}
 
-function performSplitMove(startRow, startCol, target1, target2) {
-  const piece = boardState[startRow][startCol].pop(); // Take the piece
-  
-  // Create two "half" versions
-  const halfPiece1 = { ...piece, prob: 0.5 };
-  const halfPiece2 = { ...piece, prob: 0.5 };
+  function renderBoard() {
+    // Clear old squares but keep the glass overlay
+    const oldSquares = boardDiv.querySelectorAll('.square');
+    oldSquares.forEach(s => s.remove());
 
-  // Place them in the new locations
-  boardState[target1.row][target1.col].push(halfPiece1);
-  boardState[target2.row][target2.col].push(halfPiece2);
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const square = document.createElement("div");
+        square.classList.add("square", (row + col) % 2 === 0 ? "white" : "black");
+        
+        // Label the square for the click listener to find
+        square.dataset.row = row;
+        square.dataset.col = col;
+
+        // Apply yellow highlight if this square is selected
+        if (selectedSquare && selectedSquare.row === row && selectedSquare.col === col) {
+          square.classList.add("selected");
+        }
+
+        const container = document.createElement("div");
+        container.classList.add("piece-container");
+
+        boardState[row][col].forEach(pieceData => {
+          const img = document.createElement("img");
+          img.src = `pieces/${pieceMap[pieceData.type]}.png`;
+          img.classList.add("piece", pieceData.prob < 1 ? "split" : "full");
+          container.appendChild(img);
+        });
+
+        square.appendChild(container);
+        boardDiv.appendChild(square);
+      }
+    }
+  }
+
+  // Handle Clicks
+  boardDiv.addEventListener("click", (e) => {
+    const squareElement = e.target.closest(".square");
+    if (!squareElement) return;
+
+    const row = parseInt(squareElement.dataset.row);
+    const col = parseInt(squareElement.dataset.col);
+
+    if (selectedSquare) {
+      // If same square is clicked, deselect
+      if (selectedSquare.row === row && selectedSquare.col === col) {
+        selectedSquare = null;
+      } else {
+        // Move piece to new square
+        movePiece(selectedSquare.row, selectedSquare.col, row, col);
+        selectedSquare = null;
+      }
+      renderBoard();
+    } else {
+      // Select if square contains a piece
+      if (boardState[row][col].length > 0) {
+        selectedSquare = { row, col };
+        renderBoard();
+      }
+    }
+  });
+
+  function movePiece(fromRow, fromCol, toRow, toCol) {
+    const pieces = boardState[fromRow][fromCol];
+    if (pieces.length > 0) {
+      // Simple Move Logic: Move the piece(s) to the new square
+      // This will overwrite whatever is in the target square (Capture)
+      boardState[toRow][toCol] = pieces; 
+      boardState[fromRow][fromCol] = [];
+    }
+  }
 
   renderBoard();
-}
+});
